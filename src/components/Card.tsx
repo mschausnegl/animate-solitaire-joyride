@@ -16,12 +16,12 @@ const Card = ({ suit, value, isFlipped, onClick, className }: CardProps) => {
   return (
     <div className={cn("card", isFlipped && "flipped", className)} onClick={onClick}>
       <div className="card-inner">
+        <div className={cn("card-back")} />
         <div className={cn("card-front flex flex-col justify-between p-2", suitColor)}>
           <div className="text-left text-xl">{value}</div>
           <div className="text-center text-4xl">{suit}</div>
           <div className="text-right text-xl rotate-180">{value}</div>
         </div>
-        <div className="card-back" />
       </div>
     </div>
   );

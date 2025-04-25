@@ -62,8 +62,12 @@
   @apply absolute w-full h-full rounded-lg backface-hidden;
 }
 
+.card-front {
+  transform: rotateY(180deg);
+}
+
 .card-back {
-  @apply bg-blue-800 transform rotate-y-180;
+  @apply bg-blue-800;
   background-image: linear-gradient(45deg, #1a365d 25%, transparent 25%),
     linear-gradient(-45deg, #1a365d 25%, transparent 25%),
     linear-gradient(45deg, transparent 75%, #1a365d 75%),
