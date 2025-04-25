@@ -8,13 +8,20 @@ interface CardProps {
   isFlipped: boolean;
   onClick?: () => void;
   className?: string;
+  id?: string;
+  "data-source"?: string;
 }
 
-const Card = ({ suit, value, isFlipped, onClick, className }: CardProps) => {
+const Card = ({ suit, value, isFlipped, onClick, className, id, "data-source": dataSource }: CardProps) => {
   const suitColor = suit === '♥' || suit === '♦' ? 'text-red-600' : 'text-black';
 
   return (
-    <div className={cn("card", isFlipped && "flipped", className)} onClick={onClick}>
+    <div 
+      className={cn("card", isFlipped && "flipped", className)} 
+      onClick={onClick}
+      id={id}
+      data-source={dataSource}
+    >
       <div className="card-inner">
         <div className={cn("card-back")} />
         <div className={cn("card-front flex flex-col justify-between p-2", suitColor)}>

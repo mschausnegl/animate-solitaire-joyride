@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { gsap } from 'gsap';
 import { Draggable } from 'gsap/Draggable';
@@ -18,7 +17,6 @@ interface CardType {
   rank?: number;
 }
 
-// Define card values and their rank
 const valueRanks: Record<string, number> = {
   'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, 
   '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13
@@ -57,11 +55,9 @@ const GameBoard = () => {
       });
     });
 
-    // Shuffle deck
     const shuffledDeck = [...newDeck].sort(() => Math.random() - 0.5);
     setDeck(shuffledDeck);
 
-    // Deal cards to tableau
     const newTableauPiles: CardType[][] = Array(7).fill([]).map(() => []);
     let cardIndex = 0;
 
@@ -69,7 +65,6 @@ const GameBoard = () => {
       for (let j = i; j < 7; j++) {
         newTableauPiles[j] = [...newTableauPiles[j], {
           ...shuffledDeck[cardIndex],
-          // Flip the top card of each pile
           isFlipped: j === i
         }];
         cardIndex++;
@@ -93,11 +88,9 @@ const GameBoard = () => {
 
   const dealFromStock = () => {
     if (stock.length === 0) {
-      // Reset stock from waste
       setStock(waste.reverse().map(card => ({ ...card, isFlipped: false })));
       setWaste([]);
       
-      // Add animation for recycling waste back to stock
       gsap.from(".stock-pile-card", {
         rotation: 360,
         duration: 0.5,
@@ -113,7 +106,6 @@ const GameBoard = () => {
       dealtCard.isFlipped = true;
       setWaste([...waste, dealtCard]);
       
-      // Record move for undo functionality
       setMoveHistory([...moveHistory, {
         type: 'dealFromStock',
         card: dealtCard,
@@ -123,7 +115,6 @@ const GameBoard = () => {
     }
     setStock(newStock);
 
-    // Animate the card deal
     gsap.fromTo(".waste-top-card", 
       { 
         x: -50, 
@@ -141,7 +132,6 @@ const GameBoard = () => {
   };
 
   useEffect(() => {
-    // Initialize draggable cards
     const draggableItems = document.querySelectorAll('.draggable-card');
     
     draggableItems.forEach((item) => {
@@ -160,25 +150,21 @@ const GameBoard = () => {
           setDragSource({ type, pileIndex, cardIndex });
           element.classList.add('dragging');
           
-          // Bring to front during drag
           gsap.set(element, { zIndex: 100 });
         },
         onDragEnd: function() {
           const element = this.target as HTMLDivElement;
           element.classList.remove('dragging');
           
-          // Get final position
           const finalX = this.x;
           const finalY = this.y;
           
-          // Check if dropped on a valid target
           const dropTarget = findDropTarget(finalX, finalY);
           
           if (dropTarget && dragSource) {
             handleCardMove(dragSource, dropTarget);
           }
           
-          // Reset position
           gsap.to(element, { 
             x: 0, 
             y: 0, 
@@ -195,7 +181,6 @@ const GameBoard = () => {
   }, [tableauPiles, foundationPiles, waste]);
 
   const findDropTarget = (x: number, y: number) => {
-    // Check tableau piles
     for (let i = 0; i < tableauRefs.current.length; i++) {
       const pileEl = tableauRefs.current[i];
       if (pileEl) {
@@ -211,7 +196,6 @@ const GameBoard = () => {
       }
     }
     
-    // Check foundation piles
     for (let i = 0; i < foundationRefs.current.length; i++) {
       const pileEl = foundationRefs.current[i];
       if (pileEl) {
@@ -232,7 +216,6 @@ const GameBoard = () => {
 
   const handleCardMove = (source: { type: string; pileIndex: number; cardIndex: number }, 
                           target: { type: string; pileIndex: number }) => {
-    // Get the card(s) to move
     let cardsToMove: CardType[] = [];
     let sourceCards: CardType[] = [];
     
@@ -250,13 +233,11 @@ const GameBoard = () => {
     
     if (cardsToMove.length === 0) return;
     
-    // Check if move is valid
     const isValid = validateMove(cardsToMove, target);
     
     if (isValid) {
       executeMove(source, target, cardsToMove);
       
-      // Add move to history
       setMoveHistory([...moveHistory, {
         type: 'cardMove',
         source,
@@ -264,10 +245,8 @@ const GameBoard = () => {
         cards: cardsToMove
       }]);
       
-      // Clear hint
       setHintCard(null);
       
-      // Play success animation
       gsap.to(`#${cardsToMove[0].id}`, {
         scale: 1.05,
         duration: 0.2,
@@ -275,7 +254,6 @@ const GameBoard = () => {
         repeat: 1
       });
     } else {
-      // Play invalid move animation
       gsap.to(`#${cardsToMove[0].id}`, {
         x: 10,
         duration: 0.1,
@@ -293,14 +271,12 @@ const GameBoard = () => {
     if (target.type === 'tableau') {
       const targetPile = tableauPiles[target.pileIndex];
       
-      // If target pile is empty, only King can be placed
       if (targetPile.length === 0) {
         return cardToMove.value === 'K';
       }
       
       const targetCard = targetPile[targetPile.length - 1];
       
-      // Card must be opposite color and one rank lower
       return (
         targetCard.isFlipped &&
         cardToMove.color !== targetCard.color && 
@@ -311,17 +287,14 @@ const GameBoard = () => {
     if (target.type === 'foundation') {
       const targetPile = foundationPiles[target.pileIndex];
       
-      // Only one card can be moved to foundation
       if (cards.length > 1) return false;
       
-      // If foundation pile is empty, only Ace can be placed
       if (targetPile.length === 0) {
         return cardToMove.value === 'A';
       }
       
       const targetCard = targetPile[targetPile.length - 1];
       
-      // Card must be same suit and one rank higher
       return (
         cardToMove.suit === targetCard.suit && 
         cardToMove.rank === targetCard.rank + 1
@@ -334,21 +307,17 @@ const GameBoard = () => {
   const executeMove = (source: { type: string; pileIndex: number; cardIndex: number }, 
                       target: { type: string; pileIndex: number }, 
                       cards: CardType[]) => {
-    // Remove cards from source
     if (source.type === 'tableau') {
       const newTableauPiles = [...tableauPiles];
       const sourcePile = [...newTableauPiles[source.pileIndex]];
       
-      // Remove cards from source pile
       newTableauPiles[source.pileIndex] = sourcePile.slice(0, source.cardIndex);
       
-      // Flip the new top card if needed
       if (newTableauPiles[source.pileIndex].length > 0 && 
           !newTableauPiles[source.pileIndex][newTableauPiles[source.pileIndex].length - 1].isFlipped) {
         newTableauPiles[source.pileIndex][newTableauPiles[source.pileIndex].length - 1].isFlipped = true;
       }
       
-      // Add cards to target
       if (target.type === 'tableau') {
         newTableauPiles[target.pileIndex] = [...newTableauPiles[target.pileIndex], ...cards];
       } else if (target.type === 'foundation') {
@@ -386,16 +355,13 @@ const GameBoard = () => {
       }
     }
     
-    // Check for win condition
     checkForWin();
   };
 
   const checkForWin = () => {
-    // Check if all foundation piles have 13 cards (A through K)
     const isWin = foundationPiles.every(pile => pile.length === 13);
     
     if (isWin) {
-      // Celebration animation
       toast.success("Congratulations! You won the game!");
       
       gsap.to(".card", {
@@ -420,7 +386,6 @@ const GameBoard = () => {
     setMoveHistory(newHistory);
     
     if (lastMove.type === 'dealFromStock') {
-      // Return the card to the stock
       const newWaste = [...waste];
       const cardToReturn = newWaste.pop();
       if (cardToReturn) {
@@ -429,7 +394,6 @@ const GameBoard = () => {
       }
       setWaste(newWaste);
       
-      // Animate card going back to stock
       gsap.to(".stock-pile-card", {
         scale: 1.1,
         duration: 0.2,
@@ -440,20 +404,16 @@ const GameBoard = () => {
       toast.info("Move undone");
     } 
     else if (lastMove.type === 'cardMove') {
-      // Undo card movement
       const { source, target, cards } = lastMove;
       
-      // This is a simplified undo - in a real game you would need to handle all edge cases
       if (target.type === 'tableau') {
         const newTableauPiles = [...tableauPiles];
         const targetPile = newTableauPiles[target.pileIndex];
         newTableauPiles[target.pileIndex] = targetPile.slice(0, targetPile.length - cards.length);
         
-        // Return cards to source
         if (source.type === 'tableau') {
           const sourcePile = newTableauPiles[source.pileIndex];
           if (sourcePile.length > 0) {
-            // Unflip the previous top card if needed
             sourcePile[sourcePile.length - 1].isFlipped = false;
           }
           newTableauPiles[source.pileIndex] = [...sourcePile, ...cards];
@@ -474,11 +434,9 @@ const GameBoard = () => {
         const newFoundationPiles = [...foundationPiles];
         newFoundationPiles[target.pileIndex].pop();
         
-        // Return card to source
         if (source.type === 'tableau') {
           const newTableauPiles = [...tableauPiles];
           if (newTableauPiles[source.pileIndex].length > 0) {
-            // Unflip the previous top card if needed
             const lastCard = newTableauPiles[source.pileIndex][newTableauPiles[source.pileIndex].length - 1];
             if (lastCard.isFlipped) {
               lastCard.isFlipped = false;
@@ -497,19 +455,15 @@ const GameBoard = () => {
       toast.info("Move undone");
     }
     
-    // Clear hint
     setHintCard(null);
   };
 
   const showHint = () => {
-    // Find a valid move
     let moveFound = false;
     
-    // Check waste card for valid moves
     if (waste.length > 0) {
       const wasteCard = waste[waste.length - 1];
       
-      // Check tableau piles for valid moves
       for (let i = 0; i < tableauPiles.length; i++) {
         const targetPile = tableauPiles[i];
         if (targetPile.length === 0) {
@@ -530,7 +484,6 @@ const GameBoard = () => {
         }
       }
       
-      // Check foundation piles for valid moves
       if (!moveFound) {
         for (let i = 0; i < foundationPiles.length; i++) {
           const targetPile = foundationPiles[i];
@@ -553,7 +506,6 @@ const GameBoard = () => {
       }
     }
     
-    // Check tableau piles for valid moves
     if (!moveFound) {
       for (let i = 0; i < tableauPiles.length; i++) {
         const sourcePile = tableauPiles[i];
@@ -564,9 +516,8 @@ const GameBoard = () => {
           
           const cardToMove = sourcePile[j];
           
-          // Check other tableau piles
           for (let k = 0; k < tableauPiles.length; k++) {
-            if (k === i) continue; // Skip same pile
+            if (k === i) continue;
             
             const targetPile = tableauPiles[k];
             if (targetPile.length === 0) {
@@ -589,10 +540,9 @@ const GameBoard = () => {
           
           if (moveFound) break;
           
-          // Check foundation piles
           for (let k = 0; k < foundationPiles.length; k++) {
             const targetPile = foundationPiles[k];
-            if (j === sourcePile.length - 1) { // Only top card can go to foundation
+            if (j === sourcePile.length - 1) {
               if (targetPile.length === 0) {
                 if (cardToMove.value === 'A') {
                   setHintCard(cardToMove.id);
@@ -618,7 +568,6 @@ const GameBoard = () => {
       }
     }
     
-    // If hint found, animate it
     if (moveFound) {
       gsap.to(`#${hintCard}`, {
         y: -10,
@@ -628,7 +577,6 @@ const GameBoard = () => {
         ease: "bounce.out"
       });
       
-      // Set a timeout to clear hint
       setTimeout(() => {
         setHintCard(null);
       }, 3000);
@@ -638,7 +586,6 @@ const GameBoard = () => {
   };
 
   const startNewGame = () => {
-    // Animation for starting a new game
     gsap.to(".card", {
       scale: 0.8,
       opacity: 0,
@@ -649,7 +596,6 @@ const GameBoard = () => {
   };
 
   useEffect(() => {
-    // Initialize the refs for drop targets
     tableauRefs.current = tableauRefs.current.slice(0, 7);
     foundationRefs.current = foundationRefs.current.slice(0, 4);
   }, []);
@@ -660,13 +606,11 @@ const GameBoard = () => {
       return;
     }
     
-    // For tableau piles, only top card is clickable
     if (sourceType === 'tableau') {
       const pile = tableauPiles[pileIndex];
       if (cardIndex !== pile.length - 1 || !pile[cardIndex].isFlipped) return;
     }
     
-    // Try to move to foundation automatically
     if ((sourceType === 'tableau' && cardIndex === tableauPiles[pileIndex].length - 1) || sourceType === 'waste') {
       let card: CardType;
       
@@ -677,7 +621,6 @@ const GameBoard = () => {
         card = waste[waste.length - 1];
       }
       
-      // Try each foundation pile
       for (let i = 0; i < foundationPiles.length; i++) {
         const target = { type: 'foundation', pileIndex: i };
         const isValid = validateMove([card], target);
@@ -694,10 +637,9 @@ const GameBoard = () => {
         }
       }
       
-      // If we couldn't move to foundation, try to find another valid move
       if (sourceType === 'tableau') {
         for (let i = 0; i < tableauPiles.length; i++) {
-          if (i === pileIndex) continue; // Skip same pile
+          if (i === pileIndex) continue;
           
           const target = { type: 'tableau', pileIndex: i };
           const card = tableauPiles[pileIndex][cardIndex];
@@ -728,7 +670,6 @@ const GameBoard = () => {
   return (
     <div className="p-4">
       <div className="max-w-7xl mx-auto">
-        {/* Control buttons */}
         <div className="flex justify-center gap-3 mb-4">
           <Button onClick={startNewGame} variant="secondary" className="flex items-center gap-2">
             <RefreshCw size={18} /> New Game
@@ -741,7 +682,6 @@ const GameBoard = () => {
           </Button>
         </div>
         
-        {/* Top row - Stock and Foundation piles */}
         <div className="flex gap-4 mb-8">
           <div className="flex gap-4">
             <div
@@ -794,7 +734,6 @@ const GameBoard = () => {
           </div>
         </div>
 
-        {/* Tableau piles */}
         <div className="flex gap-4 justify-center">
           {tableauPiles.map((pile, pileIndex) => (
             <div 
