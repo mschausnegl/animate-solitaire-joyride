@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { gsap } from 'gsap';
 import { Draggable } from 'gsap/Draggable';
@@ -273,10 +274,23 @@ const GameBoard = () => {
                       : foundationRefs.current[target.pileIndex];
       
       if (sourceEl && targetEl) {
+        // Calculate target position for the card to move
         const sourceRect = sourceEl.getBoundingClientRect();
         const targetRect = targetEl.getBoundingClientRect();
-        const deltaX = targetRect.left - sourceRect.left;
-        const deltaY = targetRect.top - sourceRect.top;
+        
+        // Get the number of existing cards in the target pile
+        const targetPile = target.type === 'tableau' ? tableauPiles[target.pileIndex] : foundationPiles[target.pileIndex];
+        const targetCount = targetPile.length;
+        
+        // Calculate offsets - for tableau piles, account for card stacking
+        let deltaX = targetRect.left - sourceRect.left;
+        let deltaY = targetRect.top - sourceRect.top;
+        
+        // For tableau piles, adjust Y position based on the number of cards already in the pile
+        if (target.type === 'tableau' && targetCount > 0) {
+          // Add vertical offset for each card in the pile (20px per card)
+          deltaY += (targetCount * 20);
+        }
         
         cardsToMove.forEach((card, index) => {
           const cardEl = document.getElementById(card.id);
@@ -285,7 +299,7 @@ const GameBoard = () => {
               { x: 0, y: 0 },
               {
                 x: deltaX,
-                y: deltaY,
+                y: deltaY + (index * 20), // Add stacking offset for cards below
                 duration: 0.3,
                 ease: "power2.out",
                 onComplete: () => {
