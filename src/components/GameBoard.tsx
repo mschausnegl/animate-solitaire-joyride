@@ -150,7 +150,39 @@ const GameBoard = () => {
           setDragSource({ type, pileIndex, cardIndex });
           element.classList.add('dragging');
           
+          if (type === 'tableau') {
+            const pile = tableauPiles[pileIndex];
+            const cardsBelow = pile.slice(cardIndex);
+            cardsBelow.forEach((card, index) => {
+              const cardEl = document.getElementById(card.id);
+              if (cardEl && index > 0) {
+                gsap.set(cardEl, { 
+                  x: 0,
+                  y: this.y,
+                  zIndex: 100 + index
+                });
+              }
+            });
+          }
+          
           gsap.set(element, { zIndex: 100 });
+        },
+        onDrag: function() {
+          if (dragSource && dragSource.type === 'tableau') {
+            const pile = tableauPiles[dragSource.pileIndex];
+            const cardsBelow = pile.slice(dragSource.cardIndex);
+            cardsBelow.forEach((card, index) => {
+              if (index > 0) {
+                const cardEl = document.getElementById(card.id);
+                if (cardEl) {
+                  gsap.set(cardEl, { 
+                    x: this.x,
+                    y: this.y + (index * 20)
+                  });
+                }
+              }
+            });
+          }
         },
         onDragEnd: function() {
           const element = this.target as HTMLDivElement;
@@ -163,16 +195,16 @@ const GameBoard = () => {
           
           if (dropTarget && dragSource) {
             handleCardMove(dragSource, dropTarget);
+          } else {
+            gsap.to(element, { 
+              x: 0, 
+              y: 0, 
+              duration: 0.3,
+              onComplete: () => {
+                gsap.set(element, { clearProps: "all" });
+              }
+            });
           }
-          
-          gsap.to(element, { 
-            x: 0, 
-            y: 0, 
-            duration: 0.3,
-            onComplete: () => {
-              gsap.set(element, { clearProps: "zIndex" });
-            }
-          });
           
           setDragSource(null);
         }
@@ -236,7 +268,39 @@ const GameBoard = () => {
     const isValid = validateMove(cardsToMove, target);
     
     if (isValid) {
-      executeMove(source, target, cardsToMove);
+      const sourceEl = document.getElementById(cardsToMove[0].id);
+      const targetEl = target.type === 'tableau' ? tableauRefs.current[target.pileIndex] 
+                      : foundationRefs.current[target.pileIndex];
+      
+      if (sourceEl && targetEl) {
+        const sourceRect = sourceEl.getBoundingClientRect();
+        const targetRect = targetEl.getBoundingClientRect();
+        const deltaX = targetRect.left - sourceRect.left;
+        const deltaY = targetRect.top - sourceRect.top;
+        
+        cardsToMove.forEach((card, index) => {
+          const cardEl = document.getElementById(card.id);
+          if (cardEl) {
+            gsap.fromTo(cardEl,
+              { x: 0, y: 0 },
+              {
+                x: deltaX,
+                y: deltaY,
+                duration: 0.3,
+                ease: "power2.out",
+                onComplete: () => {
+                  if (index === 0) {
+                    executeMove(source, target, cardsToMove);
+                    gsap.set(cardEl, { clearProps: "x,y" });
+                  }
+                }
+              }
+            );
+          }
+        });
+      } else {
+        executeMove(source, target, cardsToMove);
+      }
       
       setMoveHistory([...moveHistory, {
         type: 'cardMove',
@@ -246,19 +310,14 @@ const GameBoard = () => {
       }]);
       
       setHintCard(null);
-      
-      gsap.to(`#${cardsToMove[0].id}`, {
-        scale: 1.05,
-        duration: 0.2,
-        yoyo: true,
-        repeat: 1
-      });
     } else {
-      gsap.to(`#${cardsToMove[0].id}`, {
-        x: 10,
-        duration: 0.1,
-        yoyo: true,
-        repeat: 3
+      cardsToMove.forEach(card => {
+        gsap.to(`#${card.id}`, {
+          x: 10,
+          duration: 0.1,
+          yoyo: true,
+          repeat: 3
+        });
       });
       
       toast.error("Invalid move!");
