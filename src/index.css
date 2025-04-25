@@ -32,6 +32,16 @@
   }
 }
 
+@layer utilities {
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+  
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+  }
+}
+
 .card {
   @apply bg-white rounded-lg shadow-lg cursor-pointer select-none;
   width: 100px;
@@ -71,4 +81,3 @@
 .tableau-pile {
   @apply min-h-[140px];
 }
-
