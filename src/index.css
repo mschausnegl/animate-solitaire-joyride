@@ -85,3 +85,35 @@
 .tableau-pile {
   @apply min-h-[140px];
 }
+
+.draggable-card {
+  @apply cursor-grab active:cursor-grabbing;
+  z-index: 10;
+}
+
+.draggable-card.dragging {
+  z-index: 100;
+  opacity: 0.8;
+}
+
+.valid-drop-target {
+  @apply ring-2 ring-green-400;
+}
+
+.invalid-drop-target {
+  @apply ring-2 ring-red-400;
+}
+
+.card-highlight {
+  @apply ring-4 ring-yellow-300;
+  animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+  from {
+    box-shadow: 0 0 10px 0 rgba(250, 204, 21, 0.5);
+  }
+  to {
+    box-shadow: 0 0 20px 5px rgba(250, 204, 21, 0.8);
+  }
+}
